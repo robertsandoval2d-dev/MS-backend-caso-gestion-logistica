@@ -1,0 +1,128 @@
+package com.ferreteriapsa.seguridad.service;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
+import com.ferreteriapsa.seguridad.model.*;
+import com.ferreteriapsa.seguridad.repository.*;
+
+import jakarta.transaction.Transactional;
+
+import com.ferreteriapsa.seguridad.dto.request.UsuarioRequest;
+import com.ferreteriapsa.seguridad.dto.response.*;
+import com.ferreteriapsa.seguridad.config.JwtService;
+
+@Service
+public class AutenticacionService implements AutenticacionInterface{
+    private final JwtService jwtService;
+    private final UsuarioRepository usuarioRepository;
+    private final RolRepository rolRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public AutenticacionService(UsuarioRepository usuarioRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+        this.usuarioRepository = usuarioRepository;
+        this.rolRepository = rolRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+    }
+
+    @Override
+    public Usuario registrarUsuario(String username, String password, String userRol) {
+        // 1. verificar si ya existe
+        if (usuarioRepository.findByUsername(username).isPresent()) {
+            throw new ResponseStatusException( //409 CONFLICT
+                    HttpStatus.CONFLICT,
+                    "El nombre de usuario ya existe"
+            );
+        }
+
+        //2. crear nuevo usuario
+        Usuario usuario = new Usuario();
+        usuario.setUsername(username);
+        usuario.setPassword(passwordEncoder.encode(password));  //encriptar password (BCrypt)
+        usuario.setActivo(true);
+        
+        Rol rol = rolRepository.findByNombre(userRol)
+          .orElseThrow(() -> new ResponseStatusException( //404 NOT FOUND
+                    HttpStatus.NOT_FOUND,
+                    "Rol no encontrado"
+            ));
+
+        usuario.setRol(rol);
+
+        // 3. guardar en BD (Hibernate)
+        return usuarioRepository.save(usuario);
+
+    }
+
+    @Override
+    @Transactional
+    public void desactivarCuentaPorTrabajador(Long usuarioId){
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(()-> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "No se encontró una cuenta de usuario para el trabajador especificado"));
+        usuario.setActivo(false);
+        usuarioRepository.save(usuario);
+    }
+
+    public Auth login(UsuarioRequest request) {
+
+        // 1. Buscar usuario
+        Usuario usuario = usuarioRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new ResponseStatusException( //401 UNAUTHORIZED
+                HttpStatus.UNAUTHORIZED,
+                "Credenciales inválidas"
+                ));
+
+        // 2. Verificar si está activo
+        if (!usuario.isActivo()) {
+            throw new ResponseStatusException( //403 FORBIDDEN
+                    HttpStatus.FORBIDDEN,
+                    "Usuario deshabilitado"
+            );
+        }
+
+        // 3. Comparar contraseña (BCrypt)
+        if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
+            throw new ResponseStatusException( //401 UNAUTHORIZED
+                HttpStatus.UNAUTHORIZED,
+                "Credenciales inválidas"
+            );
+        }
+
+        // 4. Generar token y refreshToken
+         String token = jwtService.generateToken(usuario);
+         String refreshToken = jwtService.generateRefreshToken(usuario);
+
+        // 5. Devolver token
+        return new Auth(token, refreshToken);
+    }
+
+    public AuthResponse refreshToken(String refreshToken){
+        String username = jwtService.extractUsername(refreshToken);
+
+        Usuario usuario = usuarioRepository.findByUsername(username)
+        .orElseThrow(() -> new ResponseStatusException( //401 UNAUTHORIZED
+        HttpStatus.UNAUTHORIZED,
+        "Usuario no encontrado"
+        ));
+
+        if (!usuario.isActivo()) {
+            throw new ResponseStatusException( //403 FORBIDDEN
+                    HttpStatus.FORBIDDEN,
+                    "Usuario deshabilitado"
+            );
+        }
+        
+        if(!jwtService.isTokenValid(refreshToken, usuario)){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sesión expirada");
+        }
+
+        String token = jwtService.generateToken(usuario);
+
+        return new AuthResponse(token);
+    }
+}

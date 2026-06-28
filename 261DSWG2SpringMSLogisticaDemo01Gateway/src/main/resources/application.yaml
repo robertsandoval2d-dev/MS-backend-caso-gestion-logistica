@@ -1,3 +1,7 @@
+server:
+  port: 8080
 spring:
   application:
     name: 261DSWG2SpringMSLogisticaDemo01Gateway
+  config:
+    import: optional:configserver:http://localhost:8888
