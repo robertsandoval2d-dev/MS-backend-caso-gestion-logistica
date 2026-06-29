@@ -7,6 +7,7 @@ import com.ferreteriapsa.gestionlogistica.trabajador.model.Trabajador;
 import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.TrabajadorResponse;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
 
@@ -28,5 +29,7 @@ public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
         ORDER BY t.nombre
     """)
     List<TrabajadorResponse> listarTrabajadoresConTienda();
+
+    Optional<Trabajador> findByUsuarioId(Long usuarioId);
 
 }

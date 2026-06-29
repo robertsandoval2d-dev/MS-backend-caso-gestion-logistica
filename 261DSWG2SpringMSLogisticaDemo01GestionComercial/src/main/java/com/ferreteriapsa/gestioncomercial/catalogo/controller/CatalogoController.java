@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.ferreteriapsa.gestioncomercial.catalogo.dto.response.*;
 import com.ferreteriapsa.gestioncomercial.catalogo.model.LineaProducto;
 import com.ferreteriapsa.gestioncomercial.catalogo.service.CatalogoService;
-// import com.ferreteriapsa.logistica.auth.config.CustomUserPrincipal;
+import com.ferreteriapsa.gestioncomercial.config.CustomUserPrincipal;
 
 @RestController
 @RequestMapping("/logistica/catalogo")
@@ -23,18 +23,18 @@ public class CatalogoController {
         this.catalogoService = catalogoService;
     }
 
-    // @PreAuthorize("hasRole('JEFE_DE_LINEA')")
-    // @GetMapping("/productos-linea")
-    // public ResponseEntity<List<CatalogoResponse>> listarCatalogoLinea(
-    //         @AuthenticationPrincipal CustomUserPrincipal principal) {
+    @PreAuthorize("hasRole('JEFE_DE_LINEA')")
+    @GetMapping("/productos-linea")
+    public ResponseEntity<List<CatalogoResponse>> listarCatalogoLinea(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
 
-    //     Long trabajadorId = principal.getTrabajadorId();
+        Long trabajadorId = principal.getTrabajadorId();
 
-    //     List<CatalogoResponse> catalogo =
-    //             catalogoService.obtenerCatalogo(trabajadorId);
+        List<CatalogoResponse> catalogo =
+                catalogoService.obtenerCatalogo(trabajadorId);
 
-    //     return new ResponseEntity<>(catalogo, HttpStatus.OK);
-    // }
+        return new ResponseEntity<>(catalogo, HttpStatus.OK);
+    }
 
     @GetMapping("/linea-detalle/{id}")
     public ResponseEntity<LineaProducto> buscarLineaProducto(@PathVariable("id") Long lineaProductoId){

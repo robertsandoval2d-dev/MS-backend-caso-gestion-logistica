@@ -9,12 +9,8 @@ import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.dto.response.L
 import com.ferreteriapsa.gestionlogistica.client.seguridad.SeguridadClient;
 import com.ferreteriapsa.gestionlogistica.client.seguridad.dto.request.*;
 import com.ferreteriapsa.gestionlogistica.client.seguridad.dto.response.*;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.request.TrabajadorRequest;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.request.TrabajadorUpdateRequest;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.LineaProductoResponse;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.TiendaResponse;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.TrabajadorResponse;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.TrabajadorUpdateResponse;
+import com.ferreteriapsa.gestionlogistica.trabajador.dto.request.*;
+import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.*;
 import com.ferreteriapsa.gestionlogistica.trabajador.model.*;  
 import com.ferreteriapsa.gestionlogistica.trabajador.repository.*;
 
@@ -28,7 +24,7 @@ import java.util.stream.Collectors;
 
 
 @Service
-public class TrabajadorService {
+public class TrabajadorService implements TrabajadorInterface{
     private final SeguridadClient seguridadClient;
     private final GestionComercialClient gestionComercialClient;
     private final TrabajadorRepository trabajadorRepository;
@@ -384,5 +380,41 @@ public class TrabajadorService {
                     .toList()
             ))
             .toList();
+    }
+
+    @Override
+    public TrabajadorDTO buscarTrabajador(Long usuarioId) {
+        // 1. Buscamos el trabajador y usamos orElse(null) para evitar excepciones
+        Trabajador trabajador = trabajadorRepository.findByUsuarioId(usuarioId).orElse(null);
+
+        // 2. Si no se encuentra, retornamos el DTO nulo como pediste
+        if (trabajador == null) {
+            return null; 
+        }
+
+        // 3. Mapeamos la entidad Trabajador al TrabajadorDTO
+        TrabajadorDTO trabajadorDTO = new TrabajadorDTO();
+
+        trabajadorDTO.setTrabajadorId(trabajador.getTrabajadorId()); 
+        trabajadorDTO.setNombre(trabajador.getNombre());
+
+        // 4. Mapeamos la lista de entidades Asignacion a AsignacionDTO si existe
+        if (trabajador.getAsignaciones() != null) {
+            List<AsignacionDTO> asignacionesDTO = trabajador.getAsignaciones().stream()
+                .map(asignacion -> {
+                    AsignacionDTO asigDTO = new AsignacionDTO();
+                    asigDTO.setLineaProductoId(asignacion.getLineaProductoId());
+                    asigDTO.setNombreLinea(asignacion.getNombreLinea());
+                    asigDTO.setActivo(asignacion.isActivo()); 
+                    
+                    return asigDTO;
+                })
+                .collect(Collectors.toList());
+
+            trabajadorDTO.setAsignaciones(asignacionesDTO);
+        }
+
+        // 5. Retornamos el DTO ya armado
+        return trabajadorDTO;
     }
 }

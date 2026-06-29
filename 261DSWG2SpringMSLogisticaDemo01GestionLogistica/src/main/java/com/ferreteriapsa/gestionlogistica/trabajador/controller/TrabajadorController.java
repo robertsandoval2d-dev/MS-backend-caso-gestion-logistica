@@ -5,11 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.request.TrabajadorRequest;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.request.TrabajadorUpdateRequest;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.TiendaResponse;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.TrabajadorResponse;
-import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.TrabajadorUpdateResponse;
+import com.ferreteriapsa.gestionlogistica.trabajador.dto.request.*;
+import com.ferreteriapsa.gestionlogistica.trabajador.dto.response.*;
 import com.ferreteriapsa.gestionlogistica.trabajador.service.TrabajadorService;
 
 import java.util.List;
@@ -60,5 +57,11 @@ public class TrabajadorController {
     public ResponseEntity<List<TiendaResponse>> listarTiendasConLineas(){
         List<TiendaResponse> listaTiendas = trabajadorService.listarTiendasConLineas();
         return new ResponseEntity<>(listaTiendas,HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TrabajadorDTO> buscarTrabajador(@PathVariable("id") Long usuarioId){
+        TrabajadorDTO trabajador = trabajadorService.buscarTrabajador(usuarioId);
+        return ResponseEntity.ok(trabajador);
     }
 }

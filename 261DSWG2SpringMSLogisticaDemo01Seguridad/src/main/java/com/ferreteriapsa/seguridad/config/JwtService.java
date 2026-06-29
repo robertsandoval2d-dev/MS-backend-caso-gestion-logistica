@@ -11,6 +11,7 @@ import java.util.function.Function;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.ferreteriapsa.seguridad.client.gestionlogistica.dto.response.TrabajadorDTO;
 import com.ferreteriapsa.seguridad.model.Usuario;
 
 @Service
@@ -23,7 +24,7 @@ public class JwtService {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    public String generateToken(Usuario usuario) {
+    public String generateToken(Usuario usuario, TrabajadorDTO trabajador) {
         JwtBuilder builder = Jwts.builder()
                 .setSubject(usuario.getUsername())
                 .claim("rol", usuario.getRol().getNombre())
@@ -31,20 +32,20 @@ public class JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + 900000)) //15 min * 60 seg * 1000 miliseg
                 .signWith(getKey());
 
-        // if (usuario.getTrabajador() != null) {
-        //     builder.claim("trabajadorId", usuario.getTrabajador().getTrabajadorId());
-        //     builder.claim("nombre", usuario.getTrabajador().getNombre());
-        //     if ("JEFE_DE_LINEA".equals(usuario.getRol().getNombre()) && 
-        //         usuario.getTrabajador().getAsignaciones() != null) {
-        //         usuario.getTrabajador().getAsignaciones().stream()
-        //             .filter(asignacion -> asignacion.isActivo())
-        //             .filter(asignacion -> asignacion.getLineaProducto() != null)
-        //             .findFirst()
-        //             .ifPresent(asignacionActiva ->{
-        //                 builder.claim("linea", asignacionActiva.getLineaProducto().getNombre());
-        //             });
-        //     }
-        // }
+        if (trabajador != null) {
+            builder.claim("trabajadorId", trabajador.getTrabajadorId());
+            builder.claim("nombre", trabajador.getNombre());
+            if ("JEFE_DE_LINEA".equals(usuario.getRol().getNombre()) && 
+                trabajador.getAsignaciones() != null) {
+                trabajador.getAsignaciones().stream()
+                    .filter(asignacion -> asignacion.isActivo())
+                    .filter(asignacion -> asignacion.getLineaProductoId() != null)
+                    .findFirst()
+                    .ifPresent(asignacionActiva ->{
+                        builder.claim("linea", asignacionActiva.getNombreLinea());
+                    });
+            }
+        }
 
         return builder.compact();
     }

@@ -12,6 +12,8 @@ import jakarta.transaction.Transactional;
 
 import com.ferreteriapsa.seguridad.dto.request.*;
 import com.ferreteriapsa.seguridad.dto.response.*;
+import com.ferreteriapsa.seguridad.client.gestionlogistica.GestionLogisticaClient;
+import com.ferreteriapsa.seguridad.client.gestionlogistica.dto.response.TrabajadorDTO;
 import com.ferreteriapsa.seguridad.config.JwtService;
 
 import java.util.List;
@@ -22,12 +24,16 @@ public class AutenticacionService implements AutenticacionInterface{
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GestionLogisticaClient gestionComercialClient;
 
-    public AutenticacionService(UsuarioRepository usuarioRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AutenticacionService(UsuarioRepository usuarioRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, JwtService jwtService,
+        GestionLogisticaClient gestionComercialClient
+    ) {
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.gestionComercialClient = gestionComercialClient;
     }
 
     @Override
@@ -93,12 +99,14 @@ public class AutenticacionService implements AutenticacionInterface{
 
     public Auth login(UsuarioRequest request) {
 
-        // 1. Buscar usuario
+        // 1. Buscar usuario y trabajador
         Usuario usuario = usuarioRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new ResponseStatusException( //401 UNAUTHORIZED
                 HttpStatus.UNAUTHORIZED,
                 "Credenciales inválidas"
                 ));
+        
+        TrabajadorDTO trabajador = gestionComercialClient.buscarTrabajador(usuario.getUsuarioId());
 
         // 2. Verificar si está activo
         if (!usuario.isActivo()) {
@@ -117,7 +125,7 @@ public class AutenticacionService implements AutenticacionInterface{
         }
 
         // 4. Generar token y refreshToken
-         String token = jwtService.generateToken(usuario);
+         String token = jwtService.generateToken(usuario,trabajador);
          String refreshToken = jwtService.generateRefreshToken(usuario);
 
         // 5. Devolver token
@@ -133,6 +141,8 @@ public class AutenticacionService implements AutenticacionInterface{
         "Usuario no encontrado"
         ));
 
+        TrabajadorDTO trabajador = gestionComercialClient.buscarTrabajador(usuario.getUsuarioId());
+
         if (!usuario.isActivo()) {
             throw new ResponseStatusException( //403 FORBIDDEN
                     HttpStatus.FORBIDDEN,
@@ -144,7 +154,7 @@ public class AutenticacionService implements AutenticacionInterface{
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sesión expirada");
         }
 
-        String token = jwtService.generateToken(usuario);
+        String token = jwtService.generateToken(usuario,trabajador);
 
         return new AuthResponse(token);
     }
