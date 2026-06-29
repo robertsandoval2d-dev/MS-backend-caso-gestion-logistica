@@ -59,6 +59,8 @@
     <module>261DSWG2SpringMSLogisticaDemo01Config</module>
     <module>261DSWG2SpringMSLogisticaDemo01Eureka</module>
     <module>261DSWG2SpringMSLogisticaDemo01Seguridad</module>
+    <module>261DSWG2SpringMSLogisticaDemo01GestionLogistica</module>
+    <module>261DSWG2SpringMSLogisticaDemo01GestionComercial</module>
     <module>261DSWG2SpringMSLogisticaDemo01Gateway</module>
 
   </modules>

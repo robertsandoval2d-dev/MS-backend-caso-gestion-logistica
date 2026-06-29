@@ -1,8 +1,14 @@
 package com.ferreteriapsa.seguridad.controller;
 
+import org.springframework.http.HttpStatus;
+
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.ferreteriapsa.seguridad.dto.request.*;
@@ -66,6 +72,37 @@ public class AutenticacionController {
                     cookie.toString()
                 )
                 .build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/usuarios")
+    public ResponseEntity<UsuarioResponse> registrarUsuario(@RequestBody UsuarioRegistroRequest request){
+        UsuarioResponse usuario = autenticacionService.registrarUsuario(request);
+
+        return ResponseEntity.ok(usuario);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/usuarios/desactivar/{id}")
+    public ResponseEntity<Void> desactivarCuentaUsuario(@PathVariable("id") Long usuarioId){
+        autenticacionService.desactivarCuenta(usuarioId);
+
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("usuarios")
+    public ResponseEntity<List<UsuarioResponse>> listarUsuarios(){
+        List<UsuarioResponse> usuarios = autenticacionService.listarInfoUsuarios();
+
+        return ResponseEntity.ok(usuarios);
+    }
+
+    @GetMapping("usuarios/rol/{id}")
+    public ResponseEntity<Map<String,String>> obtenerRolUsuario(@PathVariable("id") Long usuarioId){
+        String rol = autenticacionService.obtenerRolUsuario(usuarioId);
+
+        return new ResponseEntity<>(Map.of("rol",rol),HttpStatus.OK);
     }
 
 }

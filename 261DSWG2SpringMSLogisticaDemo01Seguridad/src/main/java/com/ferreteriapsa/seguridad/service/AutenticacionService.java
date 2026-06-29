@@ -10,9 +10,11 @@ import com.ferreteriapsa.seguridad.repository.*;
 
 import jakarta.transaction.Transactional;
 
-import com.ferreteriapsa.seguridad.dto.request.UsuarioRequest;
+import com.ferreteriapsa.seguridad.dto.request.*;
 import com.ferreteriapsa.seguridad.dto.response.*;
 import com.ferreteriapsa.seguridad.config.JwtService;
+
+import java.util.List;
 
 @Service
 public class AutenticacionService implements AutenticacionInterface{
@@ -29,9 +31,9 @@ public class AutenticacionService implements AutenticacionInterface{
     }
 
     @Override
-    public Usuario registrarUsuario(String username, String password, String userRol) {
+    public UsuarioResponse registrarUsuario(UsuarioRegistroRequest request) {
         // 1. verificar si ya existe
-        if (usuarioRepository.findByUsername(username).isPresent()) {
+        if (usuarioRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new ResponseStatusException( //409 CONFLICT
                     HttpStatus.CONFLICT,
                     "El nombre de usuario ya existe"
@@ -40,11 +42,11 @@ public class AutenticacionService implements AutenticacionInterface{
 
         //2. crear nuevo usuario
         Usuario usuario = new Usuario();
-        usuario.setUsername(username);
-        usuario.setPassword(passwordEncoder.encode(password));  //encriptar password (BCrypt)
+        usuario.setUsername(request.getUsername());
+        usuario.setPassword(passwordEncoder.encode(request.getPassword()));  //encriptar password (BCrypt)
         usuario.setActivo(true);
         
-        Rol rol = rolRepository.findByNombre(userRol)
+        Rol rol = rolRepository.findByNombre(request.getUserRol())
           .orElseThrow(() -> new ResponseStatusException( //404 NOT FOUND
                     HttpStatus.NOT_FOUND,
                     "Rol no encontrado"
@@ -53,19 +55,40 @@ public class AutenticacionService implements AutenticacionInterface{
         usuario.setRol(rol);
 
         // 3. guardar en BD (Hibernate)
-        return usuarioRepository.save(usuario);
+        usuarioRepository.save(usuario);
 
+        UsuarioResponse response = new UsuarioResponse();
+        response.setUsuarioId(usuario.getUsuarioId());
+        response.setRolNombre(usuario.getRol().getNombre());
+        response.setUsername(usuario.getUsername());
+        response.setActivo(usuario.isActivo());
+
+        return response;
     }
 
     @Override
     @Transactional
-    public void desactivarCuentaPorTrabajador(Long usuarioId){
+    public void desactivarCuenta(Long usuarioId){
         Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(()-> new ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "No se encontró una cuenta de usuario para el trabajador especificado"));
         usuario.setActivo(false);
         usuarioRepository.save(usuario);
+    }
+
+    @Override
+    public List<UsuarioResponse> listarInfoUsuarios(){
+        return usuarioRepository.listarTodosLosUsuarios();
+    }
+
+    @Override
+    public String obtenerRolUsuario(Long usuarioId){
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(()-> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "No se encontró una cuenta de usuario para el trabajador especificado"));
+        return usuario.getRol().getNombre();
     }
 
     public Auth login(UsuarioRequest request) {

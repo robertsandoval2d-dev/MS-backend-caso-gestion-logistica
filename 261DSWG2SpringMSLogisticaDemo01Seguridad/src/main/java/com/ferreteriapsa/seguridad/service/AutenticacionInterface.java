@@ -1,9 +1,16 @@
 package com.ferreteriapsa.seguridad.service;
 
-import com.ferreteriapsa.seguridad.model.Usuario;
+import com.ferreteriapsa.seguridad.dto.request.UsuarioRegistroRequest;
+import com.ferreteriapsa.seguridad.dto.response.UsuarioResponse;
+
+import java.util.List;
 
 public interface AutenticacionInterface {
-    Usuario registrarUsuario(String username, String password, String userRol);
+    UsuarioResponse registrarUsuario(UsuarioRegistroRequest request);
 
-    void desactivarCuentaPorTrabajador(Long usuarioId);
+    void desactivarCuenta(Long usuarioId);
+
+    List<UsuarioResponse> listarInfoUsuarios();
+
+    String obtenerRolUsuario(Long UsuarioId);
 }
