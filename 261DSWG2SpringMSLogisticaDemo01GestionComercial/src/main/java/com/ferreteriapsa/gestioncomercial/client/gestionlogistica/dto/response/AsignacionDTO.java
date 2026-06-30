@@ -1,4 +1,4 @@
-package com.ferreteriapsa.gestionlogistica.trabajador.dto.response;
+package com.ferreteriapsa.gestioncomercial.client.gestionlogistica.dto.response;
 
 public class AsignacionDTO {
     private Long lineaProductoId;
@@ -20,3 +20,4 @@ public class AsignacionDTO {
     public boolean isActivo() { return activo; }
     public void setActivo(boolean activo) { this.activo = activo; }
 }
+

@@ -38,7 +38,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //ADDED
                 .requestMatchers("/logistica/trabajadores/registrar").hasRole("ADMIN")
-                .requestMatchers("/logistica/trabajadores/*").permitAll()
+                .requestMatchers("/logistica/trabajadores/usuario/*").permitAll()
                 .anyRequest().authenticated()         // protegido
             )
             .formLogin(form -> form.disable())

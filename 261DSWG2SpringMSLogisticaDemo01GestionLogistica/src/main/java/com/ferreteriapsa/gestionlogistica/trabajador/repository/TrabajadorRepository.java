@@ -32,4 +32,6 @@ public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
 
     Optional<Trabajador> findByUsuarioId(Long usuarioId);
 
+    Optional<Trabajador> findByTrabajadorId(Long trabajadorId);
+
 }

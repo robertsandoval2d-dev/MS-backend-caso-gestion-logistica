@@ -26,7 +26,7 @@ public class JwtFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
         // Le decimos al filtro que NO se ejecute en estas rutas
-        return path.contains("/logistica/trabajadores/*");
+        return path.contains("/logistica/trabajadores/usuario/*");
     }
 
     @Override

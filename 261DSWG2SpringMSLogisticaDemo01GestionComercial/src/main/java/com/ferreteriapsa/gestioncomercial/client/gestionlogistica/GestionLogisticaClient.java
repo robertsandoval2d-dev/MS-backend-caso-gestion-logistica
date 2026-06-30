@@ -9,4 +9,7 @@ import com.ferreteriapsa.gestioncomercial.client.gestionlogistica.dto.response.*
 public interface GestionLogisticaClient {
     @GetMapping("/logistica/inventario/trabajador/{id}/filtro-catalogo")
     FiltroCatalogoTrabajadorDTO obtenerFiltroCatalogoParaTrabajador(@PathVariable("id") Long trabajadorId);
+
+    @GetMapping("/logistica/trabajadores/trabajador/{id}")
+    TrabajadorDTO buscarTrabajador(@PathVariable ("id") Long trabajadorId);
 }

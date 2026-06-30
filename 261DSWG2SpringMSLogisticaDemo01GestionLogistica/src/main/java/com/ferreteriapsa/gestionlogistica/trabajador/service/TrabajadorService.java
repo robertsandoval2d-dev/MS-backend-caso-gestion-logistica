@@ -383,7 +383,7 @@ public class TrabajadorService implements TrabajadorInterface{
     }
 
     @Override
-    public TrabajadorDTO buscarTrabajador(Long usuarioId) {
+    public TrabajadorDTO buscarTrabajadorPorUsuarioId(Long usuarioId) {
         // 1. Buscamos el trabajador y usamos orElse(null) para evitar excepciones
         Trabajador trabajador = trabajadorRepository.findByUsuarioId(usuarioId).orElse(null);
 
@@ -406,6 +406,44 @@ public class TrabajadorService implements TrabajadorInterface{
                     asigDTO.setLineaProductoId(asignacion.getLineaProductoId());
                     asigDTO.setNombreLinea(asignacion.getNombreLinea());
                     asigDTO.setActivo(asignacion.isActivo()); 
+                    asigDTO.setTiendaId(asignacion.getTienda().getTiendaId());
+                    
+                    return asigDTO;
+                })
+                .collect(Collectors.toList());
+
+            trabajadorDTO.setAsignaciones(asignacionesDTO);
+        }
+
+        // 5. Retornamos el DTO ya armado
+        return trabajadorDTO;
+    }
+
+    @Override
+    public TrabajadorDTO buscarTrabajadorPorTrabajadorId(Long trabajadorId) {
+        // 1. Buscamos el trabajador y usamos orElse(null) para evitar excepciones
+        Trabajador trabajador = trabajadorRepository.findByTrabajadorId(trabajadorId).orElse(null);
+
+        // 2. Si no se encuentra, retornamos el DTO nulo como pediste
+        if (trabajador == null) {
+            return null; 
+        }
+
+        // 3. Mapeamos la entidad Trabajador al TrabajadorDTO
+        TrabajadorDTO trabajadorDTO = new TrabajadorDTO();
+
+        trabajadorDTO.setTrabajadorId(trabajador.getTrabajadorId()); 
+        trabajadorDTO.setNombre(trabajador.getNombre());
+
+        // 4. Mapeamos la lista de entidades Asignacion a AsignacionDTO si existe
+        if (trabajador.getAsignaciones() != null) {
+            List<AsignacionDTO> asignacionesDTO = trabajador.getAsignaciones().stream()
+                .map(asignacion -> {
+                    AsignacionDTO asigDTO = new AsignacionDTO();
+                    asigDTO.setLineaProductoId(asignacion.getLineaProductoId());
+                    asigDTO.setNombreLinea(asignacion.getNombreLinea());
+                    asigDTO.setActivo(asignacion.isActivo()); 
+                    asigDTO.setTiendaId(asignacion.getTienda().getTiendaId());
                     
                     return asigDTO;
                 })

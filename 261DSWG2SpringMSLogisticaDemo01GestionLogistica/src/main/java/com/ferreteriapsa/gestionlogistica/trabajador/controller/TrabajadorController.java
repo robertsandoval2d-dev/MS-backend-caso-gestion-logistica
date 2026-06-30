@@ -59,9 +59,15 @@ public class TrabajadorController {
         return new ResponseEntity<>(listaTiendas,HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<TrabajadorDTO> buscarTrabajador(@PathVariable("id") Long usuarioId){
-        TrabajadorDTO trabajador = trabajadorService.buscarTrabajador(usuarioId);
+    @GetMapping("/usuario/{id}")
+    public ResponseEntity<TrabajadorDTO> buscarTrabajadorPorUsuarioId(@PathVariable("id") Long usuarioId){
+        TrabajadorDTO trabajador = trabajadorService.buscarTrabajadorPorUsuarioId(usuarioId);
+        return ResponseEntity.ok(trabajador);
+    }
+
+    @GetMapping("/trabajador/{id}")
+    public ResponseEntity<TrabajadorDTO> buscarTrabajadorPorTrabajadorId(@PathVariable("id") Long trabajadorId){
+        TrabajadorDTO trabajador = trabajadorService.buscarTrabajadorPorTrabajadorId(trabajadorId);
         return ResponseEntity.ok(trabajador);
     }
 }
