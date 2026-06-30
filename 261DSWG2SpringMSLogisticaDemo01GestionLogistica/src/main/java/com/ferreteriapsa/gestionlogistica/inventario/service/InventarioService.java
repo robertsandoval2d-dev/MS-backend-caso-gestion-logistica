@@ -7,6 +7,8 @@ import com.ferreteriapsa.gestionlogistica.inventario.dto.response.FiltroCatalogo
 // import com.ferreteriapsa.logistica.compra.model.OrdenCompra;
 // import com.ferreteriapsa.logistica.compra.repository.DetalleOrdenCompraRepository;
 import com.ferreteriapsa.gestionlogistica.inventario.dto.response.InventarioDTO;
+import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.GestionComercialClient;
+import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.dto.response.ProductoDetalleDTO;
 import com.ferreteriapsa.gestionlogistica.inventario.dto.request.*;
 import com.ferreteriapsa.gestionlogistica.inventario.model.Inventario;
 import com.ferreteriapsa.gestionlogistica.inventario.model.ZonaAlmacen;
@@ -28,6 +30,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.Collections;
 
 @Service
@@ -37,16 +41,19 @@ public class InventarioService implements InventarioInterface{
     // private final OrdenCompraRepository ordenCompraRepository;
     private final TrabajadorRepository trabajadorRepository;
     private final AsignacionRepository asignacionRepository;
+    private final GestionComercialClient gestionComercialClient;
     // private final ProductoRepository productoRepository;
     // private final DetalleOrdenCompraRepository detalleOrdenCompraRepository;
 
     public InventarioService(InventarioRepository inventarioRepository, /*OrdenCompraRepository ordenCompraRepository,*/
                              TrabajadorRepository trabajadorRepository/*, ProductoRepository productoRepository,
-                             DetalleOrdenCompraRepository detalleOrdenCompraRepository*/, AsignacionRepository asignacionRepository) {
+                             DetalleOrdenCompraRepository detalleOrdenCompraRepository*/, AsignacionRepository asignacionRepository,
+                            GestionComercialClient gestionComercialClient) {
         this.inventarioRepository = inventarioRepository;
         // this.ordenCompraRepository = ordenCompraRepository;
         this.trabajadorRepository = trabajadorRepository;
         this.asignacionRepository = asignacionRepository;
+        this.gestionComercialClient = gestionComercialClient;
         // this.productoRepository = productoRepository;
         // this.detalleOrdenCompraRepository = detalleOrdenCompraRepository;
     }
@@ -65,11 +72,47 @@ public class InventarioService implements InventarioInterface{
         return new FiltroCatalogoTrabajadorDTO(datos.getLineaProductoId(), productosEnAlmacen);
     }
 
-    // @Transactional(readOnly = true)
-    // public List<InventarioDTO> listarInventarioLinea(Long trabajadorId){
+    @Transactional(readOnly = true)
+    public List<InventarioDTO> listarInventarioLinea(Long trabajadorId){
+        AsignacionRepository.DatosAsignacion datos = asignacionRepository.obtenerDatosAsignacionActiva(trabajadorId);
 
-    //     return inventarioRepository.buscarProductosPorJefeId(trabajadorId);
-    // }
+        List<Long> productosId = gestionComercialClient.obtenerProductosIdsPorLineaProducto(datos.getLineaProductoId());
+
+        if (productosId == null || productosId.isEmpty()) {
+            return List.of();
+        }
+
+        List<Inventario> inventarios = inventarioRepository.buscarInventariosPorJefeYProductos(trabajadorId, productosId);
+
+        if (inventarios.isEmpty()) {
+            return List.of(); // Si no hay stock físico de nada, retornamos vacío
+        }
+
+        List<Long> idsEnAlmacen = inventarios.stream()
+                .map(Inventario::getProductoId)
+                .distinct()
+                .toList();
+
+        List<ProductoDetalleDTO> detallesProductos = gestionComercialClient.obtenerDetallesProductosPorIds(idsEnAlmacen);
+
+        Map<Long, ProductoDetalleDTO> mapaProductos = detallesProductos.stream()
+                .collect(Collectors.toMap(ProductoDetalleDTO::getProductoId, p -> p));
+
+        return inventarios.stream()
+                .map(inv -> {
+                    ProductoDetalleDTO infoExtra = mapaProductos.get(inv.getProductoId());
+                    
+                    return new InventarioDTO(
+                            inv.getProductoId(),
+                            infoExtra != null ? infoExtra.getNombre() : "Producto Desconocido",
+                            inv.getStock(),
+                            inv.getStockMin(),
+                            inv.getRotacion().name(),
+                            infoExtra != null ? infoExtra.getCategoria() : "Sin Categoría"
+                    );
+                })
+                .toList();
+    }
 
     //ALMACENERO-POST
     // @SuppressWarnings("null")

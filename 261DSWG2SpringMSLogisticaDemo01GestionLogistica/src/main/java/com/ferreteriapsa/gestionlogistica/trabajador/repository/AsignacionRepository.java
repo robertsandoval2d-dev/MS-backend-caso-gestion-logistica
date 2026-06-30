@@ -17,12 +17,14 @@ public interface AsignacionRepository extends JpaRepository<Asignacion,Long>{
     interface DatosAsignacion {
         Long getLineaProductoId();
         Long getAlmacenId();
+        Long getTiendaId();
     }
 
     @Query("""
         SELECT 
             a.lineaProductoId AS lineaProductoId, 
-            a.tienda.almacen.almacenId AS almacenId
+            a.tienda.almacen.almacenId AS almacenId,
+            a.tienda.tiendaId AS tiendaId
         FROM Asignacion a
         WHERE a.trabajador.trabajadorId = :trabajadorId
         AND a.activo = true

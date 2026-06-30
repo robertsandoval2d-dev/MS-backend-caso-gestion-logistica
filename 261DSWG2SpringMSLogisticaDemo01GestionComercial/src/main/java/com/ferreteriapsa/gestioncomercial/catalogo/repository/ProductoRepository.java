@@ -27,4 +27,11 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
         @Param("lineaProductoId") Long lineaProductoId,
         @Param("productoIdsEnAlmacen") List<Long> productoIdsEnAlmacen
     );
+
+    @Query("""
+        SELECT p.productoId 
+        FROM Producto p 
+        WHERE p.lineaProducto.lineaProductoId = :lineaProductoId
+    """)
+    List<Long> obtenerIdsPorLineaProductoId(@Param("lineaProductoId") Long lineaProductoId);
 }

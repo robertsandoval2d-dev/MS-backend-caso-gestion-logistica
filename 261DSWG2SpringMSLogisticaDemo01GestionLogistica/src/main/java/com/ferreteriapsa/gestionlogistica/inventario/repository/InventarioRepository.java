@@ -37,6 +37,23 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
     // """)
     // List<InventarioDTO> buscarProductosPorJefeId(@Param("trabajadorId") Long trabajadorId);
 
+    @Query("""
+        SELECT i
+        FROM Inventario i
+        WHERE i.productoId IN :productosIds
+        AND EXISTS (
+            SELECT 1
+            FROM Asignacion a
+            WHERE a.trabajador.trabajadorId = :trabajadorId
+            AND a.activo = true
+            AND a.tienda.almacen = i.zonaAlmacen.almacen
+        )
+    """)
+    List<Inventario> buscarInventariosPorJefeYProductos(
+        @Param("trabajadorId") Long trabajadorId,
+        @Param("productosIds") List<Long> productosIds
+    );
+
     // Optional<Inventario> findByProductoProductoIdAndZonaAlmacenAlmacenAlmacenId(Long productoId, Long almacenId);
 
     // @Query("SELECT i FROM Inventario i " +

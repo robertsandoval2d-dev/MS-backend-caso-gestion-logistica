@@ -62,9 +62,34 @@ public class CatalogoService implements CatalogoInterface{
         return new ArrayList<>(mapa.values());
     }
 
+    @Override
     public LineaProducto buscarLineaProducto(Long lineaProductoId){
         return lineaProductoRepository.findById(lineaProductoId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Línea no encontrada"));
     }
 
+    @Override
+    public List<Long> obtenerProductosIdsPorLineaProducto(Long lineaProductoId){
+        return productoRepository.obtenerIdsPorLineaProductoId(lineaProductoId);
+    }
+
+    @Override
+    public List<ProductoDetalleDTO> obtenerDetallesProductosPorIds(List<Long> ids) {
+        // 1. Validación de seguridad para no hacer consultas vacías
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        // 2. Usamos el método nativo de JPA para buscar todos los productos por sus IDs
+        List<Producto> productos = productoRepository.findAllById(ids);
+
+        // 3. Transformamos la lista de Entidades a una lista de DTOs
+        return productos.stream()
+                .map(producto -> new ProductoDetalleDTO(
+                        producto.getProductoId(),
+                        producto.getNombre(),
+                        producto.getCategoria()
+                ))
+                .toList(); 
+    }
 }

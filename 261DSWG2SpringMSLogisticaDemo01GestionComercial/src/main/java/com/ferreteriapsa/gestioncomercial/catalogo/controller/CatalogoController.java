@@ -42,4 +42,17 @@ public class CatalogoController {
 
         return new ResponseEntity<>(lineaProducto, HttpStatus.OK);
     }
+
+    @GetMapping("/productos-ids-linea")
+    public ResponseEntity<List<Long>> obtenerProductosIdsPorLineaProducto(@RequestParam("lineaProductoId") Long lineaProductoId){
+        List<Long> productosId = catalogoService.obtenerProductosIdsPorLineaProducto(lineaProductoId);
+
+        return new ResponseEntity<>(productosId, HttpStatus.OK);
+    }
+
+    @PostMapping("/productos-detalles-linea")
+    public ResponseEntity<List<ProductoDetalleDTO>> obtenerDetallesProductosPorIds(@RequestBody List<Long> ids) {
+        List<ProductoDetalleDTO> detalles = catalogoService.obtenerDetallesProductosPorIds(ids);
+        return ResponseEntity.ok(detalles);
+    }
 }
