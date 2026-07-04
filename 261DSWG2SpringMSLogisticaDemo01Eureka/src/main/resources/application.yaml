@@ -1,15 +1,21 @@
-server:
-  port: 8761
+# server:
+#   port: 8761
+# spring:
+#   application:
+#     name: 261DSWG2SpringMSLogisticaDemo01Eureka
+#   config:
+#     import: 'optional:configserver:http://localhost:8888'
+# eureka:
+#   instance:
+#     prefer-ip-address: true
+#   client:
+#     register-with-eureka: false
+#     fetch-registry: false
+#     service-url:
+#       defaultZone: http://localhost:${server.port}/eureka/
+
 spring:
   application:
     name: 261DSWG2SpringMSLogisticaDemo01Eureka
   config:
     import: 'optional:configserver:http://localhost:8888'
-eureka:
-  instance:
-    prefer-ip-address: true
-  client:
-    register-with-eureka: false
-    fetch-registry: false
-    service-url:
-      defaultZone: http://localhost:${server.port}/eureka/

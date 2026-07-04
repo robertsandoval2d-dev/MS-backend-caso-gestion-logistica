@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: 261DSWG2SpringMSLogisticaDemo01Gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            - AddRequestHeader=X-Gateway-Request, true
+          discovery:
+            locator:
+              enabled: true
+          routes:
+            - id: seguridad
+              uri: lb://261DSWG2SPRINGMSLOGISTICADEMO01SEGURIDAD
+              predicates:
+                - Path=/seguridad/**
+              filters:
+                - RewritePath=/seguridad/(?<segment>.*), /logistica/${segment}
+            - id: logistica
+              uri: lb://261DSWG2SPRINGMSLOGISTICADEMO01GESTIONLOGISTICA
+              predicates:
+                - Path=/gestion-logistica/**
+              filters:
+                - RewritePath=/gestion-logistica/(?<segment>.*), /logistica/${segment}
+            - id: comercial
+              uri: lb://261DSWG2SPRINGMSLOGISTICADEMO01GESTIONCOMERCIAL
+              predicates:
+                - Path=/gestion-comercial/**
+              filters:
+                - RewritePath=/gestion-comercial/(?<segment>.*), /logistica/${segment}
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: false
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka
