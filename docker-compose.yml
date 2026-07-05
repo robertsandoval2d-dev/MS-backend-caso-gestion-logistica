@@ -1,0 +1,187 @@
+services:
+
+  # Seguridad Database Service (Isolated)
+  postgres-seguridad:
+    image: postgres:16-alpine
+    container_name: postgres-seguridad
+    ports:
+      - "5433:5432" # Exposed on port 5433 to avoid collision on host machine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ms_logistica_seguridad_db
+    volumes:
+      - pgdata-seguridad:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ms_logistica_seguridad_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Gestion Logistica Database Service (Isolated)
+  postgres-glogistica:
+    image: postgres:16-alpine
+    container_name: postgres-glogistica
+    ports:
+      - "5434:5432" # Exposed on port 5434 to avoid collision on host machine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ms_logistica_gestion_logistica_db
+    volumes:
+      - pgdata-glogistica:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ms_logistica_gestion_logistica_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Gestion Comercial Database Service (Isolated)
+  postgres-gcomercial:
+    image: postgres:16-alpine
+    container_name: postgres-gcomercial
+    ports:
+      - "5435:5432" # Exposed on port 5434 to avoid collision on host machine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=ms_logistica_gestion_comercial_db
+    volumes:
+      - pgdata-gcomercial:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ms_logistica_gestion_comercial_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Config Server
+  config-server:
+    build: ./261DSWG2SpringMSLogisticaDemo01Config
+    image: config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    depends_on:
+      postgres-seguridad:
+        condition: service_healthy
+      postgres-glogistica:
+        condition: service_healthy
+      postgres-gcomercial:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8888/261DSWG2SpringMSLogisticaDemo01Seguridad/default || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Eureka Server
+  eureka-server:
+    build: ./261DSWG2SpringMSLogisticaDemo01Eureka
+    image: eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Seguridad Service
+  seguridad-service:
+    build: ./261DSWG2SpringMSLogisticaDemo01Seguridad
+    image: seguridad-service
+    container_name: seguridad-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-seguridad:5432/ms_logistica_seguridad_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - TOKEN_JWT_SECRET=mi_clave_super_larga_y_segura_1234567890_abcd
+      - ADMIN_PASSWORD=admin123
+    depends_on:
+      postgres-seguridad:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  # Gestion Logistica Service
+  glogistica-service:
+    build: ./261DSWG2SpringMSLogisticaDemo01GestionLogistica
+    image: glogistica-service
+    container_name: glogistica-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-glogistica:5432/ms_logistica_gestion_logistica_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - TOKEN_JWT_SECRET=mi_clave_super_larga_y_segura_1234567890_abcd
+    depends_on:
+      postgres-glogistica:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  # Gestion Comercial Service
+  gcomercial-service:
+    build: ./261DSWG2SpringMSLogisticaDemo01GestionComercial
+    image: gcomercial-service
+    container_name: gcomercial-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-gcomercial:5432/ms_logistica_gestion_comercial_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - TOKEN_JWT_SECRET=mi_clave_super_larga_y_segura_1234567890_abcd
+    depends_on:
+      postgres-gcomercial:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  # Gateway
+  gateway:
+    build: ./261DSWG2SpringMSLogisticaDemo01Gateway
+    image: gateway
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      seguridad-service:
+        condition: service_started
+      glogistica-service:
+        condition: service_started
+      gcomercial-service:
+        condition: service_started
+
+volumes:
+  pgdata-seguridad:
+  pgdata-glogistica:
+  pgdata-gcomercial:
