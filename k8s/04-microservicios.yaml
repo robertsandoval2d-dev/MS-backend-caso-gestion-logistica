@@ -1,0 +1,216 @@
+# ─── MS Seguridad ───────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seguridad-service
+  namespace: ferreteria-psa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seguridad-service
+  template:
+    metadata:
+      labels:
+        app: seguridad-service
+    spec:
+      containers:
+        - name: seguridad
+          image: seguridad-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ms-config
+                  key: CONFIG_URL
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: ms-config
+                  key: EUREKA_URL
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-seguridad:5432/ms_logistica_seguridad_db
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: DB_PASSWORD
+            - name: TOKEN_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: TOKEN_JWT_SECRET
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: ADMIN_PASSWORD
+#          readinessProbe:
+#            httpGet:
+#              path: /actuator/health
+#              port: 8081
+#            initialDelaySeconds: 40
+#            periodSeconds: 10
+#            failureThreshold: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seguridad-service
+  namespace: ferreteria-psa
+spec:
+  selector:
+    app: seguridad-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+
+# ─── MS Gestión Logística ────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: glogistica-service
+  namespace: ferreteria-psa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: glogistica-service
+  template:
+    metadata:
+      labels:
+        app: glogistica-service
+    spec:
+      containers:
+        - name: glogistica
+          image: glogistica-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ms-config
+                  key: CONFIG_URL
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: ms-config
+                  key: EUREKA_URL
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-glogistica:5432/ms_logistica_gestion_logistica_db
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: DB_PASSWORD
+            - name: TOKEN_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: TOKEN_JWT_SECRET
+#          readinessProbe:
+#            httpGet:
+#              path: /actuator/health
+#              port: 8082
+#            initialDelaySeconds: 40
+#            periodSeconds: 10
+#            failureThreshold: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: glogistica-service
+  namespace: ferreteria-psa
+spec:
+  selector:
+    app: glogistica-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+
+# ─── MS Gestión Comercial ────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gcomercial-service
+  namespace: ferreteria-psa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gcomercial-service
+  template:
+    metadata:
+      labels:
+        app: gcomercial-service
+    spec:
+      containers:
+        - name: gcomercial
+          image: gcomercial-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ms-config
+                  key: CONFIG_URL
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: ms-config
+                  key: EUREKA_URL
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-gcomercial:5432/ms_logistica_gestion_comercial_db
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: DB_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: DB_PASSWORD
+            - name: TOKEN_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: TOKEN_JWT_SECRET
+#          readinessProbe:
+#            httpGet:
+#              path: /actuator/health
+#              port: 8083
+#            initialDelaySeconds: 40
+#            periodSeconds: 10
+#            failureThreshold: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gcomercial-service
+  namespace: ferreteria-psa
+spec:
+  selector:
+    app: gcomercial-service
+  ports:
+    - port: 8083
+      targetPort: 8083

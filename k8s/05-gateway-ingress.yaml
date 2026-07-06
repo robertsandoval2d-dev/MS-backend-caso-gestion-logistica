@@ -1,0 +1,54 @@
+# ─── API Gateway ────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: ferreteria-psa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ms-config
+                  key: CONFIG_URL
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              valueFrom:
+                configMapKeyRef:
+                  name: ms-config
+                  key: EUREKA_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            failureThreshold: 10
+---
+# Service tipo LoadBalancer — expone el Gateway al exterior
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: ferreteria-psa
+spec:
+  selector:
+    app: gateway
+  type: LoadBalancer       # en Docker Desktop esto funciona en localhost
+  ports:
+    - port: 8080
+      targetPort: 8080
