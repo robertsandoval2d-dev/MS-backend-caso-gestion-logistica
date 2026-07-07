@@ -20,13 +20,13 @@ spec:
           imagePullPolicy: IfNotPresent        # usa imagen local de Docker Desktop
           ports:
             - containerPort: 8888
-#          readinessProbe:
-#            httpGet:
-#              path: /261DSWG2SpringMSLogisticaDemo01Seguridad/default
-#              port: 8888
-#            initialDelaySeconds: 20
-#            periodSeconds: 10
-#            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
 ---
 apiVersion: v1
 kind: Service
@@ -70,13 +70,13 @@ spec:
 #                configMapKeyRef:
 #                  name: ms-config
 #                  key: CONFIG_URL
-#          readinessProbe:
-#            httpGet:
-#              path: /actuator/health
-#              port: 8761
-#            initialDelaySeconds: 30  #SUBIR DESPUES
-#            periodSeconds: 10
-#            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 45 #SUBIR DESPUES
+            periodSeconds: 10
+            failureThreshold: 10
 ---
 apiVersion: v1
 kind: Service

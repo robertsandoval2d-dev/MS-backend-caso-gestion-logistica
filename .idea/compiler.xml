@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="261DSWG2SpringMSLogisticaDemo01Config" />
+        <module name="261DSWG2SpringMSLogisticaDemo01Gateway" />
+        <module name="261DSWG2SpringMSLogisticaDemo01Eureka" />
+      </profile>
+      <profile name="Annotation profile for 261DSWG2SpringMSLogisticaDemo01Container" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+        </processorPath>
+        <module name="261DSWG2SpringMSLogisticaDemo01Seguridad" />
+        <module name="261DSWG2SpringMSLogisticaDemo01GestionComercial" />
+        <module name="261DSWG2SpringMSLogisticaDemo01GestionLogistica" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="261DSWG2SpringMSLogisticaDemo01Config" options="-parameters" />
+      <module name="261DSWG2SpringMSLogisticaDemo01Eureka" options="-parameters" />
+      <module name="261DSWG2SpringMSLogisticaDemo01Gateway" options="-parameters" />
+      <module name="261DSWG2SpringMSLogisticaDemo01GestionComercial" options="-parameters" />
+      <module name="261DSWG2SpringMSLogisticaDemo01GestionLogistica" options="-parameters" />
+      <module name="261DSWG2SpringMSLogisticaDemo01Seguridad" options="-parameters" />
+    </option>
+  </component>
+</project>

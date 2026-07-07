@@ -17,7 +17,7 @@ spec:
       containers:
         - name: gateway
           image: gateway:latest
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           env:
@@ -35,9 +35,16 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 90
+            initialDelaySeconds: 60
             periodSeconds: 10
             failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 75
+            periodSeconds: 15
+            failureThreshold: 5
 ---
 # Service tipo LoadBalancer — expone el Gateway al exterior
 apiVersion: v1
