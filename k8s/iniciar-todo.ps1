@@ -22,4 +22,3 @@ kubectl apply -f 05-gateway-ingress.yaml
 Write-Host "`n¡Todo el sistema ha sido enviado a producción local!" -ForegroundColor Magenta
 Write-Host "Ejecuta 'kubectl get pods -n ferreteria-psa -w' para ver el estado." -ForegroundColor DarkGray
 
-Start-Job { kubectl port-forward svc/gateway 8080:8080 -n ferreteria-psa }
