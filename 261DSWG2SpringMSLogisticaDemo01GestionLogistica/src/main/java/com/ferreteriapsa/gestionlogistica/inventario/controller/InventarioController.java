@@ -36,19 +36,19 @@ public class InventarioController {
         return new ResponseEntity<>(listaProductos, HttpStatus.OK);
     }
 
-    // @PreAuthorize("hasRole('ALMACENERO')")
-    // @PostMapping("/ordenes-compra/recepcion")
-    // public ResponseEntity<Map<String,String>> registrarRecepcion(
-    //         @RequestBody RegistroMercaderiaRequest request,
-    //         @AuthenticationPrincipal CustomUserPrincipal principal){
+    @PreAuthorize("hasRole('ALMACENERO')")
+    @PostMapping("/ordenes-compra/recepcion")
+    public ResponseEntity<Map<String,String>> registrarRecepcion(
+            @RequestBody RegistroMercaderiaRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal){
 
-    //     Long trabajadorId = principal.getTrabajadorId();
-    //     inventarioService.regitrarOrdenCompra(request, trabajadorId);
+        Long trabajadorId = principal.getTrabajadorId();
+        inventarioService.regitrarOrdenCompra(request, trabajadorId);
 
-    //     return ResponseEntity.ok(
-    //             Map.of("mensaje", "Mercadería recepcionada correctamente")
-    //     );
-    // }
+        return ResponseEntity.ok(
+                Map.of("mensaje", "Mercadería recepcionada correctamente")
+        );
+    }
 
     // @PreAuthorize("hasRole('JEFE_DE_LINEA')")
     // @PatchMapping("/productos/{id}")

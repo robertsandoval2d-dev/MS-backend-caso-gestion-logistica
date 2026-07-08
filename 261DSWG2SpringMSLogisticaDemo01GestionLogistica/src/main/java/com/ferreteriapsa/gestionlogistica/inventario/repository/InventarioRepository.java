@@ -54,7 +54,7 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
         @Param("productosIds") List<Long> productosIds
     );
 
-    // Optional<Inventario> findByProductoProductoIdAndZonaAlmacenAlmacenAlmacenId(Long productoId, Long almacenId);
+    Optional<Inventario> findByProductoIdAndZonaAlmacenAlmacenAlmacenId(Long productoId, Long almacenId);
 
     // @Query("SELECT i FROM Inventario i " +
     //        "JOIN FETCH i.producto p " +

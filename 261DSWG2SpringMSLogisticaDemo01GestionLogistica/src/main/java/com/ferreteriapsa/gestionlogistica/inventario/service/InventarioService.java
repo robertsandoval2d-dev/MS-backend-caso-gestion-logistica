@@ -8,6 +8,8 @@ import com.ferreteriapsa.gestionlogistica.inventario.dto.response.FiltroCatalogo
 // import com.ferreteriapsa.logistica.compra.repository.DetalleOrdenCompraRepository;
 import com.ferreteriapsa.gestionlogistica.inventario.dto.response.InventarioDTO;
 import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.GestionComercialClient;
+import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.dto.response.DetalleOrdenCompraDTO;
+import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.dto.response.OrdenCompraDTO;
 import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.dto.response.ProductoDetalleDTO;
 import com.ferreteriapsa.gestionlogistica.inventario.dto.request.*;
 import com.ferreteriapsa.gestionlogistica.inventario.model.Inventario;
@@ -114,98 +116,89 @@ public class InventarioService implements InventarioInterface{
                 .toList();
     }
 
-    //ALMACENERO-POST
-    // @SuppressWarnings("null")
-    // @Transactional
-    // public void regitrarOrdenCompra(RegistroMercaderiaRequest request, Long trabajadorId){
-    //     boolean entregaParcial = false;
+    @Transactional
+    public void regitrarOrdenCompra(RegistroMercaderiaRequest request, Long trabajadorId){
 
-    //     OrdenCompra ordenCompra = ordenCompraRepository.findById(request.getOrdenCompraId()).orElseThrow(() -> new ResponseStatusException(
-    //             HttpStatus.NOT_FOUND,
-    //             "La orden de compra no existe"
-    //     ));
+        OrdenCompraDTO ordenCompra = gestionComercialClient.obtenerOrdenCompraPorId(request.getOrdenCompraId());
 
-    //     if (ordenCompra.getEstado().equals("ENTREGADO") || ordenCompra.getEstado().equals("ENTREGADO-PARCIAL")) {
-    //         throw new ResponseStatusException(
-    //                 HttpStatus.BAD_REQUEST,
-    //                 "La orden ya fue recepcionada"
-    //         );
-    //     }
+        if (ordenCompra.getEstado().equals("ENTREGADO") || ordenCompra.getEstado().equals("ENTREGADO-PARCIAL")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La orden ya fue recepcionada"
+            );
+        }
 
-    //     Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
-    //         .orElseThrow(() -> new ResponseStatusException(
-    //                 HttpStatus.NOT_FOUND,
-    //                 "Trabajador no encontrado"
-    //             ));
+        Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Trabajador no encontrado"
+                ));
 
-    //     // Obtener la tienda activa del trabajador
-    //     Tienda tienda = trabajador.getAsignaciones().stream()
-    //         .filter(Asignacion::isActivo)
-    //         .map(Asignacion::getTienda)
-    //         .findFirst()
-    //         .orElseThrow(() -> new ResponseStatusException(
-    //                 HttpStatus.BAD_REQUEST,
-    //                 "El trabajador no posee una tienda activa asignada"
-    //         ));
+        // Obtener la tienda activa del trabajador
+        Tienda tienda = trabajador.getAsignaciones().stream()
+            .filter(Asignacion::isActivo)
+            .map(Asignacion::getTienda)
+            .findFirst()
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El trabajador no posee una tienda activa asignada"
+            ));
 
-    //     // Obtener el almacén vinculado a dicha tienda
-    //     Almacen almacen = tienda.getAlmacen();
-    //     if (almacen == null) {
-    //         throw new ResponseStatusException(
-    //                 HttpStatus.BAD_REQUEST,
-    //                 "La tienda asociada no tiene un almacén configurado"
-    //         );
-    //     }
+        // Obtener el almacén vinculado a dicha tienda
+        Almacen almacen = tienda.getAlmacen();
+        if (almacen == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La tienda asociada no tiene un almacén configurado"
+            );
+        }
 
-    //     for(RecepcionProductoDTO productoRequest: request.getProductos()){
-    //         Producto producto = productoRepository.findById(productoRequest.getProductoId()).orElseThrow(() -> new RuntimeException(
-    //                 "El producto no existe"
-    //         ));
+        boolean entregaParcial = false;
 
-    //         DetalleOrdenCompra detalleOrdenCompra = detalleOrdenCompraRepository.findByOrdenCompraOrdenCompraIdAndProductoProductoId(
-    //                         ordenCompra.getOrdenCompraId(),
-    //                         producto.getProductoId()
-    //                 )
-    //                 .orElseThrow(() -> new ResponseStatusException(
-    //                         HttpStatus.BAD_REQUEST,
-    //                         "El producto no pertenece a la orden"
-    //                 ));
+        for(RecepcionProductoDTO productoRequest: request.getProductos()){
 
-    //         int cantidadRecibida = productoRequest.getCantidad();
+            DetalleOrdenCompraDTO detalleOrdenCompra = ordenCompra.getDetalles().stream()
+                    .filter(d -> d.getProductoId().equals(productoRequest.getProductoId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST, "El producto no pertenece a la orden"));
 
-    //         if (cantidadRecibida < detalleOrdenCompra.getCantidad()) {
-    //             entregaParcial = true;
-    //         } else if (cantidadRecibida > detalleOrdenCompra.getCantidad()) {
-    //             throw new ResponseStatusException(
-    //                     HttpStatus.BAD_REQUEST,
-    //                     "La cantidad recibida excede la cantidad solicitada");
-    //         }
+            int cantidadRecibida = productoRequest.getCantidad();
 
-    //         Inventario inventario = inventarioRepository
-    //                 .findByProductoProductoIdAndZonaAlmacenAlmacenAlmacenId(producto.getProductoId(), almacen.getAlmacenId())
-    //                 .orElseThrow(() -> new ResponseStatusException(
-    //                         HttpStatus.NOT_FOUND,
-    //                         "El producto '" + producto.getNombre() + "' no se encuentra registrado en el inventario de este almacén"
-    //                 ));
+            if (cantidadRecibida < detalleOrdenCompra.getCantidad()) {
+                entregaParcial = true;
+            } else if (cantidadRecibida > detalleOrdenCompra.getCantidad()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "La cantidad recibida excede la cantidad solicitada");
+            }
 
-    //         ZonaAlmacen zonaAlmacen = inventario.getZonaAlmacen();
+            Inventario inventario = inventarioRepository
+                    .findByProductoIdAndZonaAlmacenAlmacenAlmacenId(productoRequest.getProductoId(), almacen.getAlmacenId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "El producto no se encuentra registrado en el inventario de este almacén"
+                    ));
 
-    //         inventario.setStock(inventario.getStock() + cantidadRecibida);
-    //         zonaAlmacen.setCapacidadActual(zonaAlmacen.getCapacidadActual() + cantidadRecibida);
-    //     }
+            ZonaAlmacen zonaAlmacen = inventario.getZonaAlmacen();
 
-    //     ordenCompra.setFechaEntrega(LocalDateTime.now());
+            inventario.setStock(inventario.getStock() + cantidadRecibida);
+            zonaAlmacen.setCapacidadActual(zonaAlmacen.getCapacidadActual() + cantidadRecibida);
+        }
 
-    //     if (entregaParcial) {
-    //         ordenCompra.setEstado("ENTREGADO-PARCIAL");
-    //     } else if(ordenCompra.getFechaEntrega().isAfter(ordenCompra.getPlazoFechaMaximo())){
-    //         ordenCompra.setEstado("ENTREGADO CON RETRASO");
-    //     } else {
-    //         ordenCompra.setEstado("ENTREGADO");
-    //     }
+        LocalDateTime fechaActual = LocalDateTime.now();
+        String estadoFinal;
 
-    //     ordenCompraRepository.save(ordenCompra);
-    // }
+        if (entregaParcial) {
+            estadoFinal = "ENTREGADO-PARCIAL";
+        } else if (fechaActual.isAfter(ordenCompra.getPlazoFechaMaximo())) {
+            estadoFinal = "ENTREGADO CON RETRASO";
+        } else {
+            estadoFinal = "ENTREGADO";
+        }
+
+        gestionComercialClient.recepcionarOrdenCompra(ordenCompra.getOrdenCompraId(), estadoFinal, fechaActual);
+    }
 
 
     // @Transactional
