@@ -97,6 +97,38 @@ public class AutenticacionService implements AutenticacionInterface{
         return usuario.getRol().getNombre();
     }
 
+    @Override
+    public UsuarioResponse obtenerUsuarioPorId(Long usuarioId){
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(()-> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "No se encontró una cuenta de usuario para el trabajador especificado"));
+        
+        UsuarioResponse response = new UsuarioResponse();
+        response.setUsuarioId(usuario.getUsuarioId());
+        response.setUsername(usuario.getUsername());
+        response.setRolNombre(usuario.getRol().getNombre());
+        response.setActivo(usuario.isActivo());
+
+        return response;
+    }
+
+    @Override
+    public UsuarioResponse obtenerUsuarioPorUsername(String username){
+        Usuario usuario = usuarioRepository.findByUsername(username)
+            .orElseThrow(()-> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "No se encontró una cuenta de usuario para el trabajador especificado"));
+        
+        UsuarioResponse response = new UsuarioResponse();
+        response.setUsuarioId(usuario.getUsuarioId());
+        response.setUsername(usuario.getUsername());
+        response.setRolNombre(usuario.getRol().getNombre());
+        response.setActivo(usuario.isActivo());
+
+        return response;
+    }
+
     public Auth login(UsuarioRequest request) {
 
         // 1. Buscar usuario y trabajador

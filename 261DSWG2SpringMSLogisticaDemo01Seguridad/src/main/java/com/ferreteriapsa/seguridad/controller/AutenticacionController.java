@@ -105,4 +105,20 @@ public class AutenticacionController {
         return new ResponseEntity<>(Map.of("rol",rol),HttpStatus.OK);
     }
 
+    @GetMapping("usuarios/{id}")
+    public ResponseEntity<UsuarioResponse> obtenerUsuarioPorId(@PathVariable("id") Long usuarioId){
+        UsuarioResponse usuario = autenticacionService.obtenerUsuarioPorId(usuarioId);
+
+        return ResponseEntity.ok(usuario);
+    }
+
+    @GetMapping("usuarios/username/{username}")
+    public ResponseEntity<UsuarioResponse> obtenerUsuarioPorUsername(
+            @PathVariable String username) {
+
+        UsuarioResponse usuario = autenticacionService.obtenerUsuarioPorUsername(username);
+
+        return ResponseEntity.ok(usuario);
+    }
+
 }

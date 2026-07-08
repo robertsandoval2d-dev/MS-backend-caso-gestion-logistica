@@ -13,4 +13,8 @@ public interface AutenticacionInterface {
     List<UsuarioResponse> listarInfoUsuarios();
 
     String obtenerRolUsuario(Long UsuarioId);
+
+    UsuarioResponse obtenerUsuarioPorId(Long usuarioId);
+
+    UsuarioResponse obtenerUsuarioPorUsername(String username);
 }

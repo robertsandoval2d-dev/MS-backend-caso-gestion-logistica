@@ -1,0 +1,36 @@
+package com.ferreteriapsa.gestioncomercial.ventas.controller;
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import com.ferreteriapsa.gestioncomercial.config.CustomUserPrincipal;
+import com.ferreteriapsa.gestioncomercial.ventas.dto.response.*;
+import com.ferreteriapsa.gestioncomercial.ventas.service.VentasService;
+
+@RestController
+@RequestMapping("/logistica/ventas")
+public class VentasController {
+    
+    private final VentasService ventasService;
+
+    public VentasController(VentasService ventasService) {
+        this.ventasService = ventasService;
+    }
+
+    @PreAuthorize("hasRole('JEFE_DE_LINEA')")
+    @GetMapping("/clientes/afectados-retraso")
+    public ResponseEntity<List<PedidoRetrasadoResponse>> listarPedidosRetrasados(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+            
+        Long trabajadorId = principal.getTrabajadorId();
+        
+        List<PedidoRetrasadoResponse> pedidos = ventasService.listarPedidosRetrasados(trabajadorId);
+        
+        return ResponseEntity.ok(pedidos);
+    }
+    
+}

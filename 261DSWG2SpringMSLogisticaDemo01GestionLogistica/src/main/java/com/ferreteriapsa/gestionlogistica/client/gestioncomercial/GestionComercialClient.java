@@ -3,7 +3,8 @@ package com.ferreteriapsa.gestionlogistica.client.gestioncomercial;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
-// import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.dto.request.*;
+
+import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.dto.request.*;
 import com.ferreteriapsa.gestionlogistica.client.gestioncomercial.dto.response.*;
 
 import java.time.LocalDateTime;
@@ -29,4 +30,10 @@ public interface GestionComercialClient {
         @RequestParam("nuevoEstado") String nuevoEstado, 
         @RequestParam("fechaEntrega") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaEntrega
     );
+
+    @PostMapping("logistica/catalogo/productos-ids")
+    List<ProductoClientDTO> obtenerProductosPorIds(@RequestBody List<Long> productosIds);
+
+    @PostMapping("logistica/catalogo/productos/ventas-stock")
+    List<ProductoInfoVentasDTO> obtenerVentasParaLogistica(@RequestBody ConsultaVentasRequest request);
 }

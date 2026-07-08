@@ -21,4 +21,10 @@ public interface SeguridadClient {
 
     @GetMapping("/logistica/auth/usuarios/rol/{id}")
     Map<String, String> obtenerRolUsuario(@PathVariable("id") Long usuarioId);
+
+    @GetMapping("/logistica/auth/usuarios/{id}")
+    UsuarioResponse obtenerUsuarioPorId(@PathVariable("id") Long usuarioId);
+
+    @GetMapping("/logistica/auth/usuarios/username/{username}")
+    UsuarioResponse obtenerUsuarioPorUsername(@PathVariable String username);
 }

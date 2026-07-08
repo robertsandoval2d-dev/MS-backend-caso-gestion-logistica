@@ -10,6 +10,7 @@ import com.ferreteriapsa.gestioncomercial.catalogo.repository.*;
 import com.ferreteriapsa.gestioncomercial.client.gestionlogistica.GestionLogisticaClient;
 import com.ferreteriapsa.gestioncomercial.client.gestionlogistica.dto.response.FiltroCatalogoTrabajadorDTO;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -91,5 +92,29 @@ public class CatalogoService implements CatalogoInterface{
                         producto.getCategoria()
                 ))
                 .toList(); 
+    }
+
+    @Override
+    public List<ProductoClientDTO> obtenerProductosPorIds(List<Long> productosIds){
+        List<Producto> productos = productoRepository.findProductosConLineaPorIds(productosIds);
+        
+        // Mapeamos a DTO para enviar solo lo necesario por la red
+        List<ProductoClientDTO> respuesta = productos.stream().map(p -> {
+                ProductoClientDTO productoDTO = new ProductoClientDTO();
+                productoDTO.setProductoId(p.getProductoId());
+                productoDTO.setNombre(p.getNombre());
+                productoDTO.setPrecioVenta(p.getPrecioVenta());
+                productoDTO.setCategoria(p.getCategoria());
+                productoDTO.setLineaProductoId(p.getLineaProducto().getLineaProductoId());
+
+                return productoDTO;
+        }).toList();
+
+        return respuesta;
+    }
+
+    @Override
+    public List<ProductoInfoVentasDTO> contarVentasPorProductos(List<Long> productoIds, List<Long> tiendaIds, LocalDateTime fechaLimite){
+        return productoRepository.contarVentasPorProductosYTiendas(productoIds, tiendaIds, fechaLimite);
     }
 }
