@@ -50,15 +50,15 @@ public class InventarioController {
         );
     }
 
-    // @PreAuthorize("hasRole('JEFE_DE_LINEA')")
-    // @PatchMapping("/productos/{id}")
-    // public ResponseEntity<ProductoRotacionDTO> cambiarRotacion(
-    //         @PathVariable("id") Long productoId,
-    //         @RequestBody ProductoRotacionDTO request
-    // ){
-    //     ProductoRotacionDTO rotacion = inventarioService.cambiarRotacion(productoId, request);
-    //     return new ResponseEntity<>(rotacion,HttpStatus.OK);
-    // }
+     @PreAuthorize("hasRole('JEFE_DE_LINEA')")
+     @PatchMapping("/productos/{id}")
+     public ResponseEntity<ProductoRotacionDTO> cambiarRotacion(
+             @PathVariable("id") Long productoId,
+             @RequestBody ProductoRotacionDTO request
+     ){
+         ProductoRotacionDTO rotacion = inventarioService.cambiarRotacion(productoId, request);
+         return new ResponseEntity<>(rotacion,HttpStatus.OK);
+     }
 
     @GetMapping("/trabajador/{id}/filtro-catalogo")
     public ResponseEntity<FiltroCatalogoTrabajadorDTO> obtenerFiltroCatalogoParaTrabajador(@PathVariable("id") Long trabajadorId) {

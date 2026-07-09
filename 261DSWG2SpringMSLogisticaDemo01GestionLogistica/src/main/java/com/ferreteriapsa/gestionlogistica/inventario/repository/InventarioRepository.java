@@ -33,6 +33,8 @@ public interface InventarioRepository extends JpaRepository<Inventario, Long> {
 
     Optional<Inventario> findByProductoIdAndZonaAlmacenAlmacenAlmacenId(Long productoId, Long almacenId);
 
+    Optional<Inventario> findByProductoId(Long productoId);
+
     @Query("""
         SELECT DISTINCT i
         FROM Inventario i

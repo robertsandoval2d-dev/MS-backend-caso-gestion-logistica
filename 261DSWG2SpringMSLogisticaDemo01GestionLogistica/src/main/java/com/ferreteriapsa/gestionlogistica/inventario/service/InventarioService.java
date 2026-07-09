@@ -201,22 +201,22 @@ public class InventarioService implements InventarioInterface{
     }
 
 
-    // @Transactional
-    // public ProductoRotacionDTO cambiarRotacion(Long productoId, ProductoRotacionDTO request) {
-    //     if(request.getRotacion() == null){
-    //         throw new RuntimeException("La rotación es obligatoria");
-    //     }
+     @Transactional
+     public ProductoRotacionDTO cambiarRotacion(Long productoId, ProductoRotacionDTO request) {
+         if(request.getRotacion() == null){
+             throw new RuntimeException("La rotación es obligatoria");
+         }
 
-    //     Inventario inventario = inventarioRepository.findByProductoProductoId(productoId)
-    //             .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
+         Inventario inventario = inventarioRepository.findByProductoId(productoId)
+                 .orElseThrow(() -> new RuntimeException("Inventario no encontrado"));
 
-    //     inventario.setRotacion(request.getRotacion());
+         inventario.setRotacion(request.getRotacion());
 
-    //     inventarioRepository.save(inventario);
+         inventarioRepository.save(inventario);
 
-    //     ProductoRotacionDTO response = new ProductoRotacionDTO();
-    //     response.setRotacion(inventario.getRotacion());
+         ProductoRotacionDTO response = new ProductoRotacionDTO();
+         response.setRotacion(inventario.getRotacion());
 
-    //     return response;
-    // }
+         return response;
+     }
 }
