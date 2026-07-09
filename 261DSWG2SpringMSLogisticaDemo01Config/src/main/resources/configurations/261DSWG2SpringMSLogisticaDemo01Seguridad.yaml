@@ -1,7 +1,7 @@
 server:
   port: 8081
   error:
-    include-message: always
+    include-message: never
     
 spring:
   application:
@@ -19,10 +19,10 @@ spring:
     defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
 eureka:
@@ -39,5 +39,3 @@ admin:
 jwt:
   secret: ${TOKEN_JWT_SECRET}
 
-cors:
-  allowed-origin: http://localhost:4200
