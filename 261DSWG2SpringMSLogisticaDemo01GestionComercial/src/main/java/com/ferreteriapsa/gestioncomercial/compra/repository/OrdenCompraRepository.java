@@ -53,20 +53,10 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra,Long>{
        JOIN FETCH oc.proveedor p
        WHERE oc.tiendaId = :idTienda
        AND oc.estado = 'ENTREGADO CON RETRASO'
+       AND NOT EXISTS (SELECT p FROM Penalidad p WHERE p.ordenCompra = oc)
    """)
    List<OrdenCompra> listarOrdenesCompraConRetraso(
            @Param("idTienda") Long idTienda
    );
-
-    // @Query("""
-    //     SELECT o 
-    //     FROM OrdenCompra o 
-    //     WHERE o.tiendaId = :tiendaId
-    //     AND o.estado = 'ENTREGADO CON RETRASO'
-    //     AND NOT EXISTS (SELECT p FROM Penalidad p WHERE p.ordenCompra = o)
-    // """)
-    // List<OrdenCompra> listarOrdenesCompraConRetraso(
-    //         @Param("tiendaId") Long tiendaId
-    // );
 
 }

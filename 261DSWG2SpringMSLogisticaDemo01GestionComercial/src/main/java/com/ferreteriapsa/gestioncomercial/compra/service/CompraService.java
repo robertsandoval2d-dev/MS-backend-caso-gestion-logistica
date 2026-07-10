@@ -89,7 +89,7 @@ public class CompraService implements CompraInterface {
             detalleCronogramaRepository.actualizarEstadoAProgramado(
                     producto.getProductoId(), 
                     proveedor.getProveedorId(),
-                    trabajadorId
+                    tiendaId
             );
 
             return detalle;
