@@ -1,40 +1,93 @@
 services:
 
   # Seguridad Database Service (Isolated)
-  postgres-seguridad:
-    image: postgres:16-alpine
-    container_name: postgres-seguridad
+  # postgres-seguridad:
+  #   image: postgres:16-alpine
+  #   container_name: postgres-seguridad
+  #   ports:
+  #     - "5433:5432" # Exposed on port 5433 to avoid collision on host machine
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #     - POSTGRES_DB=ms_logistica_seguridad_db
+  #   volumes:
+  #     - pgdata-seguridad:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres -d ms_logistica_seguridad_db"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+
+  # Seguridad Database Service (Isolated)
+  sqlserver-seguridad:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-seguridad
     ports:
-      - "5433:5432" # Exposed on port 5433 to avoid collision on host machine
+      - "1434:1433" # Exposed on port 1434 to avoid collision on host machine
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=ms_logistica_seguridad_db
+      - ACCEPT_EULA=Y
+      - MSSQL_PID=Developer
+      - MSSQL_SA_PASSWORD=SqlServer@12345
     volumes:
-      - pgdata-seguridad:/var/lib/postgresql/data
+      - sqlserverdata-seguridad:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ms_logistica_seguridad_db"]
-      interval: 5s
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'SqlServer@12345' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+
+  init-seguridad-db:
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      sqlserver-seguridad:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/scripts
+    command: >
+      bash -c "
+      sleep 30 &&
+      /opt/mssql-tools/bin/sqlcmd
+      -S sqlserver-seguridad
+      -U sa
+      -P 'SqlServer@12345'
+      -C
+      -i /scripts/create_db_seguridad.sql
+      "
 
   # Gestion Logistica Database Service (Isolated)
-  postgres-glogistica:
-    image: postgres:16-alpine
-    container_name: postgres-glogistica
+  # postgres-glogistica:
+  #   image: postgres:16-alpine
+  #   container_name: postgres-glogistica
+  #   ports:
+  #     - "5434:5432" # Exposed on port 5434 to avoid collision on host machine
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #     - POSTGRES_DB=ms_logistica_gestion_logistica_db
+  #   volumes:
+  #     - pgdata-glogistica:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres -d ms_logistica_gestion_logistica_db"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+
+  # Gestion Logistica Database Service (Isolated)
+  mysql-glogistica:
+    image: mysql:8.4
+    container_name: mysql-glogistica
     ports:
-      - "5434:5432" # Exposed on port 5434 to avoid collision on host machine
+      - "3308:3306" # Exposed on port 3308 to avoid collision on host machine
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=ms_logistica_gestion_logistica_db
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=ms_logistica_gestion_logistica_db
     volumes:
-      - pgdata-glogistica:/var/lib/postgresql/data
+      - mysqldata-glogistica:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ms_logistica_gestion_logistica_db"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot || exit 1"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   # Gestion Comercial Database Service (Isolated)
   postgres-gcomercial:
@@ -62,9 +115,9 @@ services:
     ports:
       - "8888:8888"
     depends_on:
-      postgres-seguridad:
+      sqlserver-seguridad:
         condition: service_healthy
-      postgres-glogistica:
+      mysql-glogistica:
         condition: service_healthy
       postgres-gcomercial:
         condition: service_healthy
@@ -102,14 +155,16 @@ services:
     environment:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-seguridad:5432/ms_logistica_seguridad_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_URL=jdbc:sqlserver://sqlserver-seguridad:1433;databaseName=ms_logistica_seguridad_db;encrypt=true;trustServerCertificate=true
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=SqlServer@12345
       - TOKEN_JWT_SECRET=mi_clave_super_larga_y_segura_1234567890_abcd
       - ADMIN_PASSWORD=admin123
     depends_on:
-      postgres-seguridad:
+      sqlserver-seguridad:
         condition: service_healthy
+      init-seguridad-db:
+        condition: service_completed_successfully
       config-server:
         condition: service_healthy
       eureka-server:
@@ -125,12 +180,12 @@ services:
     environment:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-glogistica:5432/ms_logistica_gestion_logistica_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-glogistica:3306/ms_logistica_gestion_logistica_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
       - TOKEN_JWT_SECRET=mi_clave_super_larga_y_segura_1234567890_abcd
     depends_on:
-      postgres-glogistica:
+      mysql-glogistica:
         condition: service_healthy
       config-server:
         condition: service_healthy
@@ -165,7 +220,7 @@ services:
     image: gateway
     container_name: gateway
     ports:
-      - "8080:8080"
+      - "8085:8080"
     environment:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
@@ -182,6 +237,8 @@ services:
         condition: service_started
 
 volumes:
-  pgdata-seguridad:
-  pgdata-glogistica:
+  # pgdata-seguridad:
+  sqlserverdata-seguridad:
+  # pgdata-glogistica:
+  mysqldata-glogistica:
   pgdata-gcomercial:
