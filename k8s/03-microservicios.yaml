@@ -15,8 +15,8 @@ spec:
         app: seguridad-service
     spec:
       containers:
-        - name: seguridad
-          image: seguridad-service:latest
+        - name: seguridad-service
+          image: seguridad-service
           imagePullPolicy: Never
           ports:
             - containerPort: 8081
@@ -32,17 +32,14 @@ spec:
                   name: ms-config
                   key: EUREKA_URL
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres-seguridad:5432/ms_logistica_seguridad_db
+              value: jdbc:sqlserver://sqlserver-seguridad:1433;databaseName=ms_logistica_seguridad_db;encrypt=true;trustServerCertificate=true
             - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: ms-secrets
-                  key: DB_USERNAME
+              value: sa
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: ms-secrets
-                  key: DB_PASSWORD
+                  key: MSSQL_SA_PASSWORD
             - name: TOKEN_JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -91,8 +88,8 @@ spec:
         app: glogistica-service
     spec:
       containers:
-        - name: glogistica
-          image: glogistica-service:latest
+        - name: glogistica-service
+          image: glogistica-service
           imagePullPolicy: Never
           ports:
             - containerPort: 8082
@@ -108,17 +105,14 @@ spec:
                   name: ms-config
                   key: EUREKA_URL
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres-glogistica:5432/ms_logistica_gestion_logistica_db
+              value: jdbc:mysql://mysql-glogistica:3306/ms_logistica_gestion_logistica_db
             - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: ms-secrets
-                  key: DB_USERNAME
+              value: root
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: ms-secrets
-                  key: DB_PASSWORD
+                  key: MYSQL_ROOT_PASSWORD
             - name: TOKEN_JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -162,8 +156,8 @@ spec:
         app: gcomercial-service
     spec:
       containers:
-        - name: gcomercial
-          image: gcomercial-service:latest
+        - name: gcomercial-service
+          image: gcomercial-service
           imagePullPolicy: Never
           ports:
             - containerPort: 8083
@@ -184,12 +178,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: ms-secrets
-                  key: DB_USERNAME
+                  key: POSTGRES_USER
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: ms-secrets
-                  key: DB_PASSWORD
+                  key: POSTGRES_PASSWORD
             - name: TOKEN_JWT_SECRET
               valueFrom:
                 secretKeyRef:

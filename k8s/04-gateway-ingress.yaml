@@ -16,37 +16,30 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: gateway:latest
-          imagePullPolicy: IfNotPresent
+          image: gateway
+          imagePullPolicy: Never
           ports:
-            - containerPort: 8080
+            - containerPort: 8085
           env:
             - name: SPRING_CONFIG_IMPORT
               valueFrom:
                 configMapKeyRef:
                   name: ms-config
                   key: CONFIG_URL
-            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE   # ← corregido (tenía un espacio)
               valueFrom:
                 configMapKeyRef:
                   name: ms-config
                   key: EUREKA_URL
-          readinessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 10
-            failureThreshold: 10
-          livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-            initialDelaySeconds: 75
-            periodSeconds: 15
-            failureThreshold: 5
+#          readinessProbe:
+#            httpGet:
+#              path: /actuator/health
+#              port: 8080
+#            initialDelaySeconds: 60
+#            periodSeconds: 10
+#            failureThreshold: 10
 ---
-# Service tipo LoadBalancer — expone el Gateway al exterior
+# Service tipo LoadBalancer para acceder desde localhost
 apiVersion: v1
 kind: Service
 metadata:
@@ -55,7 +48,7 @@ metadata:
 spec:
   selector:
     app: gateway
-  type: LoadBalancer       # en Docker Desktop esto funciona en localhost
+  type: LoadBalancer        # ← expone en localhost:8085
   ports:
-    - port: 8080
-      targetPort: 8080
+    - port: 8085
+      targetPort: 8085

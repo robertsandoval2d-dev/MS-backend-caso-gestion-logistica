@@ -1,24 +1,32 @@
-# Iniciar componentes base
+# levantar.ps1 — Ferretería PSA en Kubernetes
+# Ejecutar desde la carpeta k8s/
+
+Write-Host "Desplegando en Kubernetes" -ForegroundColor Cyan
+
+Write-Host "`n1 Namespace, ConfigMap y Secrets" -ForegroundColor Yellow
 kubectl apply -f 00-namespace.yaml
-kubectl apply -f 01-configmap.yaml
-kubectl apply -f 02-databases.yaml
 
-Write-Host "`n[1/3] Levantando bases de datos y namespace..." -ForegroundColor Cyan
-Start-Sleep -Seconds 5
+Write-Host "`n2 Bases de datos (SQL Server, MySQL, PostgreSQL)" -ForegroundColor Yellow
+kubectl apply -f 01-databases.yaml
+Write-Host "  Esperando SQL Server"
+kubectl wait --for=condition=ready pod -l app=sqlserver-seguridad -n ferreteria-psa --timeout=180s
+Write-Host "  Esperando MySQL"
+kubectl wait --for=condition=ready pod -l app=mysql-glogistica -n ferreteria-psa --timeout=180s
+Write-Host "  Esperando PostgreSQL"
+kubectl wait --for=condition=ready pod -l app=postgres-gcomercial -n ferreteria-psa --timeout=180s
+Write-Host "  Esperando inicializacion de base Seguridad"
+kubectl wait --for=condition=complete job/init-seguridad-db -n ferreteria-psa --timeout=180s
 
-# Levantar infraestructura central
-kubectl apply -f 03-infraestructura.yaml
-Write-Host "`n[2/3] Esperando que el Config Server y Eureka esten listos (esto toma unos 30-45s)..." -ForegroundColor Yellow
+Write-Host "`n3 Config Server y Eureka" -ForegroundColor Yellow
+kubectl apply -f 02-infraestructura.yaml
+Write-Host "  Esperando Config Server"
+kubectl wait --for=condition=ready pod -l app=config-server -n ferreteria-psa --timeout=120s
+Write-Host "  Esperando Eureka"
+kubectl wait --for=condition=ready pod -l app=eureka-server -n ferreteria-psa --timeout=120s
 
-# Espera inteligente hasta que los pods centrales estén en estado Ready
-kubectl wait --for=condition=ready pod -l app=config-server -n ferreteria-psa --timeout=60s
-kubectl wait --for=condition=ready pod -l app=eureka-server -n ferreteria-psa --timeout=60s
+Write-Host "`n Microservicios y Gateway" -ForegroundColor Yellow
+kubectl apply -f 03-microservicios.yaml
+kubectl apply -f 04-gateway-ingress.yaml
 
-# Levantar microservicios de negocio y gateway
-Write-Host "`n[3/3] Listo. Desplegando microservicios y API Gateway..." -ForegroundColor Green
-kubectl apply -f 04-microservicios.yaml
-kubectl apply -f 05-gateway-ingress.yaml
-
-Write-Host "`n¡Todo el sistema ha sido enviado a producción local!" -ForegroundColor Magenta
-Write-Host "Ejecuta 'kubectl get pods -n ferreteria-psa -w' para ver el estado." -ForegroundColor DarkGray
-
+Write-Host "`n Estado del cluster:" -ForegroundColor Cyan
+kubectl get pods -n ferreteria-psa

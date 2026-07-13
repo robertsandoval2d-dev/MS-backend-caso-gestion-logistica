@@ -1,0 +1,299 @@
+# ─── PVCs ───────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sqlserverdata-seguridad
+  namespace: ferreteria-psa
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi   # SQL Server necesita mínimo 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysqldata-glogistica
+  namespace: ferreteria-psa
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pgdata-gcomercial
+  namespace: ferreteria-psa
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+
+# ─── SQL Server — Seguridad ──────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sqlserver-seguridad
+  namespace: ferreteria-psa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqlserver-seguridad
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: sqlserver-seguridad
+    spec:
+      containers:
+        - name: sqlserver-seguridad
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_PID
+              value: Developer
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: MSSQL_SA_PASSWORD
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'SqlServer@12345' -C -Q 'SELECT 1'
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
+          volumeMounts:
+            - name: sqlserverdata-seguridad
+              mountPath: /var/opt/mssql
+      volumes:
+        - name: sqlserverdata-seguridad
+          persistentVolumeClaim:
+            claimName: sqlserverdata-seguridad
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqlserver-seguridad
+  namespace: ferreteria-psa
+spec:
+  selector:
+    app: sqlserver-seguridad
+  ports:
+    - port: 1433
+      targetPort: 1433
+
+# ─── Init DB SQL Server ─────────────────────────────────────────
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: init-seguridad-db-cm0
+  namespace: ferreteria-psa
+data:
+  create_db_seguridad.sql: |-
+    IF DB_ID('ms_logistica_seguridad_db') IS NULL
+    BEGIN
+        CREATE DATABASE ms_logistica_seguridad_db;
+    END;
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-seguridad-db
+  namespace: ferreteria-psa
+spec:
+  template:
+    spec:
+      containers:
+        - name: init-seguridad-db
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          args:
+            - bash
+            - -c
+            - "sleep 30 && /opt/mssql-tools18/bin/sqlcmd -S sqlserver-seguridad -U sa -P 'SqlServer@12345' -C -i /scripts/create_db_seguridad.sql"
+          volumeMounts:
+            - name: init-script
+              mountPath: /scripts
+      volumes:
+        - name: init-script
+          configMap:
+            name: init-seguridad-db-cm0
+      restartPolicy: Never
+  backoffLimit: 3
+
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: init-seguridad-db
+#  namespace: ferreteria-psa
+#spec:
+#  replicas: 1
+#  selector:
+#    matchLabels:
+#      app: init-seguridad-db
+#  strategy:
+#    type: Recreate
+#  template:
+#    metadata:
+#      labels:
+#        app: init-seguridad-db
+#    spec:
+#      containers:
+#        - name: init-seguridad-db
+#          image: mcr.microsoft.com/mssql/server:2022-latest
+#          args:
+#            - bash
+#            - -c
+#            - "sleep 30 && /opt/mssql-tools18/bin/sqlcmd -S sqlserver-seguridad -U sa -P 'SqlServer@12345' -C -i /scripts/create_db_seguridad.sql"
+#          volumeMounts:
+#            - name: init-script
+#              mountPath: /scripts
+#      volumes:
+#        - name: init-script
+#          configMap:
+#            name: init-seguridad-db-cm0
+
+# ─── MySQL — Logística ──────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-glogistica
+  namespace: ferreteria-psa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-glogistica
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql-glogistica
+    spec:
+      containers:
+        - name: mysql-glogistica
+          image: mysql:8.4
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: ms_logistica_gestion_logistica_db
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: MYSQL_ROOT_PASSWORD
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - mysqladmin ping -h localhost -uroot -proot
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 10
+          volumeMounts:
+            - name: mysqldata-glogistica
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysqldata-glogistica
+          persistentVolumeClaim:
+            claimName: mysqldata-glogistica
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-glogistica
+  namespace: ferreteria-psa
+spec:
+  selector:
+    app: mysql-glogistica
+  ports:
+    - port: 3306
+      targetPort: 3306
+
+# ─── PostgreSQL — Comercial ─────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-gcomercial
+  namespace: ferreteria-psa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-gcomercial
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: postgres-gcomercial
+    spec:
+      containers:
+        - name: postgres-gcomercial
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: ms_logistica_gestion_comercial_db
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: POSTGRES_PASSWORD
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - ms_logistica_gestion_comercial_db
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 5
+          volumeMounts:
+            - name: pgdata-gcomercial
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: pgdata-gcomercial
+          persistentVolumeClaim:
+            claimName: pgdata-gcomercial
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-gcomercial
+  namespace: ferreteria-psa
+spec:
+  selector:
+    app: postgres-gcomercial
+  ports:
+    - port: 5432
+      targetPort: 5432
