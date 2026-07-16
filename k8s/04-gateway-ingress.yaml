@@ -19,7 +19,7 @@ spec:
           image: gateway
           imagePullPolicy: Never
           ports:
-            - containerPort: 8085
+            - containerPort: 8080
           env:
             - name: SPRING_CONFIG_IMPORT
               valueFrom:
@@ -51,4 +51,4 @@ spec:
   type: LoadBalancer        # ← expone en localhost:8085
   ports:
     - port: 8085
-      targetPort: 8085
+      targetPort: 8080
